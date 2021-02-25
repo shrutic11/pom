@@ -1,0 +1,449 @@
+
+import nl.uwv.eures.dataProviders.ConfigFileReader;
+import nl.uwv.eures.pages.WerknlLoginPage;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeTest;
+
+import java.util.concurrent.TimeUnit;
+
+public class BaseClass {
+
+   public static WebDriver driver;
+   ConfigFileReader configFileReader;
+
+    public BaseClass() {
+
+    }
+
+    @BeforeClass
+    public void initialize() {
+
+        configFileReader = new ConfigFileReader();
+        DesiredCapabilities capabilities = DesiredCapabilities.chrome();
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("-incognito");
+        capabilities.setAcceptInsecureCerts(true);
+        capabilities.setCapability(ChromeOptions.CAPABILITY, options);
+        System.setProperty("webdriver.chrome.driver", configFileReader.getDriverPath());
+        driver = new ChromeDriver(capabilities);
+        driver.manage().window().maximize();
+        driver.manage().deleteAllCookies();
+        driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+        driver.navigate().to( configFileReader.getApplicationUrl());
+
+        System.out.println("Initialise done");
+    }
+
+
+}
+
+
+
+//Pages
+
+package nl.uwv.eures.pages;
+
+import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
+import nl.uwv.eures.tests.BaseClass;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.PageFactory;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.Wait;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import java.util.concurrent.TimeUnit;
+
+public class WerknlLoginPage extends BaseClass {
+
+    public WerknlLoginPage()
+    {
+        PageFactory.initElements(driver,this);
+    }
+
+    @FindBy(id="linkDigiD")
+    WebElement button_LoginOpUwAccount;
+    @FindBy(id="gebruikersnaam")
+    WebElement text_usernaam;
+    @FindBy(id="wachtwoord_label")
+    WebElement text_wachtwoord;
+    @FindBy(xpath="(//button[@data-ta-id='login__verzenden'])")
+    WebElement button_Inloggen;
+
+    @FindBy(xpath="//button[@data-ta-id='cookie__toestemming']")
+    WebElement button_cookieToestemming;
+
+    public void clickButtonLoginOpUwAccount()
+    {
+
+        button_LoginOpUwAccount.click();
+    }
+
+    public void voerGebruikernaam(String gebruikernaam)
+    {
+        text_usernaam.sendKeys(gebruikernaam);
+    }
+
+    public void voerWachtwoord(String wachtwoord)
+    {
+        text_wachtwoord.sendKeys(wachtwoord);
+    }
+
+    public void clickInloggen()
+    {   WebDriverWait wait = new WebDriverWait(driver, 30);
+        wait.until(ExpectedConditions.elementToBeClickable(button_Inloggen));
+        button_Inloggen.click();
+    }
+
+    public void geef_cookieToestemming()
+    {
+        button_cookieToestemming.click();
+        driver.manage().timeouts().pageLoadTimeout(30, TimeUnit.SECONDS);
+    }
+
+
+
+}
+
+
+//tests
+
+
+package nl.uwv.eures.tests;
+
+import nl.uwv.eures.dataProviders.ConfigFileReader;
+import nl.uwv.eures.pages.*;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import javax.swing.*;
+import java.util.concurrent.TimeUnit;
+
+public class OpenVacature extends BaseClass{
+
+    public OpenVacature()
+    {
+        super();
+    }
+
+    WerknlLoginPage objLoginPagina;
+    WerknlWelkomPagina objWelkomPagina;
+    WerknlStap1Pagina objStap1;
+    WerknlStap2Pagina objStap2;
+    WerknlStap3Pagina objStap3;
+    WerknlStap4Pagina objStap4;
+    WerknlStap5Pagina objStap5;
+    WerknlStap6Pagina objStap6;
+    WerknlStap7Pagina objStap7;
+    WerknlOverzichtVacature objOverzichtPagina;
+    ConfigFileReader configFileReader;
+
+    @Test
+    public void testInloggen()
+    {
+
+        configFileReader = new ConfigFileReader();
+        objLoginPagina= new WerknlLoginPage();
+        objLoginPagina.geef_cookieToestemming();
+        objLoginPagina.clickButtonLoginOpUwAccount();
+        objLoginPagina.voerGebruikernaam(configFileReader.getUsername());
+        objLoginPagina.voerWachtwoord(configFileReader.getPassword());
+        objLoginPagina.clickInloggen();
+        driver.manage().timeouts().pageLoadTimeout(30, TimeUnit.SECONDS);
+    }
+
+    @Test
+    public void testVacatureMaken()
+    {
+        objWelkomPagina = new WerknlWelkomPagina();
+        objStap1 = new WerknlStap1Pagina();
+        objStap2 = new WerknlStap2Pagina();
+        objStap3 = new WerknlStap3Pagina();
+        objStap4 = new WerknlStap4Pagina();
+        objStap5 = new WerknlStap5Pagina();
+        objStap6 = new WerknlStap6Pagina();
+        objStap7 = new WerknlStap7Pagina();
+        objOverzichtPagina = new WerknlOverzichtVacature();
+
+        objWelkomPagina.clickVacaturePlaatsen();
+        objWelkomPagina.clickVolgende();
+
+        objStap1.voerTitelIn("Vacature voor een Tester"+Math.random());
+        objStap1.watIsDeGevraagdFunctie("Tester");
+        objStap1.selectGevraagdFunctie("Tester ict");
+        objStap1.voerVereistWerkErvaringIn("Text vereist werkervaring ABC");
+        objStap1.clickVolgende();
+        driver.manage().timeouts().pageLoadTimeout(30, TimeUnit.SECONDS);
+
+        objStap2.kiezStageplaatsEnLeerbaan(false,false);
+        objStap2.kiezAlsDoelgroepenbeleid(false);
+        objStap2.clickVolgende();
+        driver.manage().timeouts().pageLoadTimeout(30, TimeUnit.SECONDS);
+
+        objStap3.kiezWerklocatie();
+        objStap3.voerPostcode("1000AA");
+        Assert.assertNotNull(objStap3.getPlaatsnaam(),null);
+        objStap3.voerMinWerktijd("16");
+        objStap3.voerMaxWerktijd("40");
+        objStap3.kiezWerktijden();
+        objStap3.kiezSoortContract();
+        objStap3.kiezSoortSalaris();
+        objStap3.voerSalarisIndicatie("3500");
+        objStap3.voerArbeidswoorwarden("Text: Arbeidswoorwarden");
+
+        objStap3.clickVolgende();
+        driver.manage().timeouts().pageLoadTimeout(30, TimeUnit.SECONDS);
+
+        objStap4.clickOpleidingToevoegen();
+        objStap4.kiezOpleidingOpties("niveau");
+        objStap4.clickOpslaan();
+        objStap4.clickVolgende();
+        driver.manage().timeouts().pageLoadTimeout(30, TimeUnit.SECONDS);
+
+        objStap5.clickErvaringToevoegen();
+        objStap5.voorVereistFunctioneel("software engineer");
+        objStap5.voerVereistWerkervaring("36");
+        objStap5.voerWerktoelichting("Toelichting: werkervaring");
+        objStap5.clickOpslaan();
+        objStap5.clickVolgende();
+        driver.manage().timeouts().pageLoadTimeout(30, TimeUnit.SECONDS);
+
+        objStap6.selectEerstTaal();
+        objStap6.VoegExtraTaalToe();
+        objStap6.checkAutoRijbewijs();
+        objStap6.checktMotorRijbewijs();
+        objStap6.voerOverigeFunctieEisen("Text:Overige Functie Eisen");
+        objStap6.clickVolgende();
+        driver.manage().timeouts().pageLoadTimeout(30,TimeUnit.SECONDS);
+
+
+        objStap7.voerUwVacatureKenmerk("Vacature Team Chili");
+        objStap7.selectContactpersoon();
+        objStap7.kiezSollicitatiewijze(false,true,true,false);
+        objStap7.voerWervendTekstIn("Text: verwend Tekst");
+        objStap7.kiezAcquisitie(false);
+        objStap7.clickOpslaan();
+        driver.manage().timeouts().pageLoadTimeout(30,TimeUnit.SECONDS);
+
+
+        System.out.println(objOverzichtPagina.getVacatureNummber());
+        objOverzichtPagina.clickActiefLink();
+        driver.manage().timeouts().pageLoadTimeout(30,TimeUnit.SECONDS);
+        objOverzichtPagina.kiezBuitenland();
+        objOverzichtPagina.clickActivieren();
+
+    }
+
+}
+
+//Datareader
+
+package nl.uwv.eures.utitlities;
+
+import nl.uwv.eures.tests.BaseClass;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
+public class ReadExcelDataSet extends BaseClass {
+
+    private static XSSFSheet ExcelWSheet;
+
+    private static XSSFWorkbook ExcelWBook;
+
+    private static XSSFCell Cell;
+
+    private static XSSFRow Row;
+
+    public static Object[][] getTableArray(String FilePath, String SheetName, int totalCols) throws Exception {
+
+        String[][] tabArray = null;
+
+        try {
+
+            FileInputStream ExcelFile = new FileInputStream(FilePath);
+
+            // Access the required test data sheet
+
+            ExcelWBook = new XSSFWorkbook(ExcelFile);
+
+            ExcelWSheet = ExcelWBook.getSheet(SheetName);
+
+            int startRow = 1;
+
+            int startCol = 1;
+
+            int ci, cj;
+
+            int totalRows = ExcelWSheet.getLastRowNum();
+
+            //int totalCols =1;
+
+
+            tabArray = new String[totalRows][totalCols];
+
+            ci = 0;
+
+            for (int i = startRow; i <= totalRows; i++, ci++) {
+
+                cj = 0;
+
+
+                for (int j = startCol; j <= totalCols; j++, cj++) {
+
+                    tabArray[ci][cj] = getCellData(i, j);
+
+                   // System.out.println(tabArray[ci][cj]);
+
+                }
+
+            }
+
+        } catch (FileNotFoundException e) {
+
+            System.out.println("Could not read the Excel sheet");
+
+            e.printStackTrace();
+
+        } catch (IOException e) {
+
+            System.out.println("Could not read the Excel sheet");
+
+            e.printStackTrace();
+
+        }
+
+        return (tabArray);
+
+    }
+
+    public static String getCellData(int RowNum, int ColNum) throws Exception {
+
+        try {
+
+            Cell = ExcelWSheet.getRow(RowNum).getCell(ColNum);
+
+           int dataType = Cell.getCellType();
+
+
+            if (dataType == 3) {
+
+                return "";
+
+            } else if(dataType==0)
+
+            {
+                Double data = Cell.getNumericCellValue();
+                String CellData = String.valueOf(data);
+
+                return CellData;
+            }
+                else{
+
+                    String CellData = Cell.getStringCellValue();
+
+                    return CellData;
+
+                }
+
+        } catch (Exception e) {
+
+
+            System.out.println(e.getMessage());
+
+            throw (e);
+
+        }
+
+    }
+
+
+    public static Object[][] readTestData(String FilePath, String SheetName) throws Exception
+
+    { String[][] tabArray = null;
+
+
+    try{
+        FileInputStream ExcelFile = new FileInputStream(FilePath);
+
+        // Access the required test data sheet
+
+        ExcelWBook = new XSSFWorkbook(ExcelFile);
+
+        ExcelWSheet = ExcelWBook.getSheet(SheetName);
+
+        int startRow = 1; //0 is the top row
+
+        int startCol = 2; //0 is the first column
+
+        int ci, cj; // index of the tabArray
+
+        ci = 0;
+
+        int totalRows = ExcelWSheet.getLastRowNum();
+
+        int totalCols = ExcelWSheet.getRow(1).getLastCellNum();
+
+        for (int i = startRow; i <= totalRows; i++) {
+
+                if(getCellData(i,startCol).equalsIgnoreCase("JA")) {
+                   ci++;
+
+                }
+
+            }
+
+        cj = totalCols-startCol-1;
+
+        tabArray = new String[ci][cj];
+
+        ci = 0;
+
+        for (int i = startRow; i < totalRows; i++) {
+
+            cj = 0;
+
+            if(getCellData(i,startCol).equalsIgnoreCase("JA")) {
+
+                for (int j = startCol+1; j <(totalCols - (startCol-2)); j++,cj++) {
+
+                           tabArray[ci][cj] = getCellData(i, j);
+
+                    //System.out.println(getCellData(i,j));
+
+                }
+
+                ci++;
+
+            }
+
+        }
+
+    } catch (FileNotFoundException e) {
+
+        System.out.println("Could not read the Excel sheet");
+
+        e.printStackTrace();
+
+    } catch (IOException e) {
+
+        System.out.println("Could not read the Excel sheet");
+
+        e.printStackTrace();
+
+    }
+
+        return (tabArray);
+
+    }
+
+}
